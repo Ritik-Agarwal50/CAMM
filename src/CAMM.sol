@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.13;
 
-import {IER20} from "./Interface/IERC20.sol";
+import "./Interface/IERC20.sol";
 
 error InsufficientBalance();
 error AmountShouldBeGreaterThanZero();
@@ -41,7 +41,7 @@ contract CAMM {
     //FUNCTIONS
 
     function _mint(address _to, uint256 amount) private {
-        if (amout > 0) {
+        if (amount > 0) {
             revert AmountShouldBeGreaterThanZero();
         }
         balanceOf[_to] += amount;
@@ -49,13 +49,13 @@ contract CAMM {
     }
 
     function burn(address _from, uint256 amount) private {
-        if (amout > 0) {
+        if (amount > 0) {
             revert AmountShouldBeGreaterThanZero();
         }
         if (balanceOf[_from] >= amount) {
             revert InsufficientBalance();
         }
-        balacneOf[_from] -= amount;
+        balanceOf[_from] -= amount;
         totalSupply -= amount;
     }
 
@@ -65,31 +65,26 @@ contract CAMM {
     }
 
     function swap(
-        uint256 tokeIn,
-        uint256 amountIn
+        address _tokenIn,
+        uint256 _amountIn
     ) external returns (uint256 amountOut) {
-        // 1=2
-        //2=1
-        // 1 +  && 2 -
-        //2 withdraw
-        //1 depo
         require(
-            tokenIn == address(token0) || tokenIn == address(token1),
+            _tokenIn == address(token0) || _tokenIn == address(token1),
             "Invalid token address"
         );
 
-        bool isToken0 = tokenIn == address(token0);
+        bool isToken0 = _tokenIn == address(token0);
 
         (
-            IERC tokenIn,
+            IERC20 tokenIn,
             IERC20 tokenOut,
             uint256 reserveIn,
             uint256 reserveOut
-        ) = token0
-                ? (token0, token1, reserev0, reserve1)
+        ) = isToken0
+                ? (token0, token1, reserve0, reserve1)
                 : (token1, token0, reserve1, reserve0);
 
-        tokenIn.transferFrom(msg.sender, address(this), amountIn);
+        tokenIn.transferFrom(msg.sender, address(this), _amountIn);
         uint amountIn = tokenIn.balanceOf(address(this)) - reserveIn;
         amountOut = (amountIn * 997) / 1000;
 
@@ -115,7 +110,7 @@ contract CAMM {
         uint256 d1 = bal1 - reserve1;
 
         if (totalSupply > 0) {
-            shares = ((d0 + d1) * totolSupply) / (reserve0 + reserve1);
+            shares = ((d0 + d1) * totalSupply) / (reserve0 + reserve1);
         } else {
             shares = d0 + d1;
         }
@@ -131,7 +126,7 @@ contract CAMM {
         d0 = (reserve0 * _shares) / totalSupply;
         d1 = (reserve1 * _shares) / totalSupply;
 
-        _burn(msg.sender, _shares);
+        burn(msg.sender, _shares);
         update(reserve0 - d0, reserve1 - d1);
 
         if (d0 > 0) {
