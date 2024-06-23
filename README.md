@@ -1,1 +1,2 @@
-The formula it works on = x + y = k
+The formula it works on is = x + y = k
+k = constant
